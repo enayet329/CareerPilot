@@ -1,4 +1,6 @@
 using CareerPilot.API.CareerPIlotDbContext;
+using CareerPilot.API.Service.Implementation;
+using CareerPilot.API.Service.Interface;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<CareerPilotDbContext>(options =>
 	options.UseSqlServer(builder.Configuration.GetConnectionString("CareerPilotDb")));
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IStorageService, StorageService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
