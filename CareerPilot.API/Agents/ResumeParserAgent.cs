@@ -16,7 +16,16 @@ public class ResumeParserAgent
 
 	public ChatCompletionAgent Create(int userId)
 	{
-		var getResume = _kernel.Plugins.GetFunction(nameof(ResumeFetchPlugin), nameof(ResumeFetchPlugin.FetchUserResumeAsync));
+		if (!_kernel.Plugins.TryGetPlugin("ResumeFetchPlugin", out var plugin))
+		{
+			throw new InvalidOperationException("Plugin ResumeFetchPlugin not found in kernel.");
+		}
+
+		var getResume = _kernel.Plugins.GetFunction("ResumeFetchPlugin", "FetchUserResume");
+		if (getResume == null)
+		{
+			throw new InvalidOperationException("Function FetchUserResume not found in ResumeFetchPlugin.");
+		}
 
 		return new ChatCompletionAgent
 		{
@@ -37,15 +46,18 @@ public class ResumeParserAgent
 	{
 		return """
             You are a Resume Parser specializing in extracting structured information from resume text.
-            Your job is to carefully analyze the provided resume and extract key information including:
-            - Full name
-            - Email and phone
-            - Current job title
-            - Years of experience
-            - Skills (technical and soft skills)
-            - Education history
-            - Work experience
-            Be precise and comprehensive.
+            Your job is to carefully analyze the provided resume and extract key information in Markdown format:
+            - **Full name**
+            - **Email and phone**
+            - **Current job title**
+            - **Years of experience**
+            - **Skills** (technical and soft skills)
+            - **Education history**
+            - **Work experience**
+            If no resume is provided (e.g., message contains "No resume found"), output:
+            ## ResumeParseResult
+            No structured resume data available. Proceed with job search.
+            Be precise and comprehensive. Output only the structured data in Markdown format.
             Do not engage in chitchat or provide additional commentary.
             """;
 	}

@@ -13,13 +13,13 @@ namespace CareerPilot.API.Plugins
 			_userService = userService ?? throw new ArgumentNullException(nameof(userService));
 		}
 
-		[KernelFunction, Description("Fetch user resume from database by user ID")]
+		[KernelFunction("FetchUserResume"), Description("Fetch user resume from database by user ID")]
 		public async Task<string> FetchUserResumeAsync(int userId)
 		{
 			var userResume = (await _userService.GetUserFileInfoByIdAsync(userId))?.ResumeText;
 			return string.IsNullOrEmpty(userResume)
-				? "No resume found for the user in the database."
-				: userResume;
+				? "## ResumeFetchResult\nNo resume found for the user in the database. Proceed with job search."
+				: "## ResumeFetchResult\n" + userResume;
 		}
 	}
 }

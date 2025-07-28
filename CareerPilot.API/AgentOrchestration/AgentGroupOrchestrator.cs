@@ -8,36 +8,32 @@ namespace CareerPilot.API.AgentOrchestration;
 
 public class AgentGroupOrchestrator
 {
-	private readonly Kernel _kernel;
 	private const string ResumeParserName = ResumeParserAgent.AgentName;
 	private const string JobMatcherName = JobMatcherAgent.AgentName;
 	private const string CareerAdvisorName = CareerAdvisorAgent.AgentName;
 	private const string InterviewCoachName = InterviewCoachAgent.AgentName;
 
-	public AgentGroupOrchestrator(Kernel kernel)
-	{
-		_kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
-	}
+	public AgentGroupOrchestrator() { }
 
 	[Experimental("SKEXP0110")]
-	public AgentGroupChatSettings CreateExecutionSettings(int userId)
+	public AgentGroupChatSettings CreateExecutionSettings(int userId, Kernel kernel)
 	{
-		var resumeParserAgent = new ResumeParserAgent(_kernel).Create(userId);
-		var jobMatcherAgent = new JobMatcherAgent(_kernel).Create();
-		var careerAdvisorAgent = new CareerAdvisorAgent(_kernel).Create();
-		var interviewCoachAgent = new InterviewCoachAgent(_kernel).Create();
+		var resumeParserAgent = new ResumeParserAgent(kernel).Create(userId);
+		var jobMatcherAgent = new JobMatcherAgent(kernel).Create();
+		var careerAdvisorAgent = new CareerAdvisorAgent(kernel).Create();
+		var interviewCoachAgent = new InterviewCoachAgent(kernel).Create();
 
 		var agents = new[] { resumeParserAgent, jobMatcherAgent, careerAdvisorAgent, interviewCoachAgent };
 
 		return new AgentGroupChatSettings
 		{
-			TerminationStrategy = CreateTerminationStrategy(agents),
-			SelectionStrategy = CreateSelectionStrategy()
+			TerminationStrategy = CreateTerminationStrategy(agents, kernel),
+			SelectionStrategy = CreateSelectionStrategy(kernel)
 		};
 	}
 
 	[Experimental("SKEXP0110")]
-	private KernelFunctionSelectionStrategy CreateSelectionStrategy()
+	private KernelFunctionSelectionStrategy CreateSelectionStrategy(Kernel kernel)
 	{
 		var selectionFunction = KernelFunctionFactory.CreateFromPrompt(
 			$$$"""
@@ -51,8 +47,8 @@ public class AgentGroupOrchestrator
                 - {{{InterviewCoachName}}}
 
                 Always follow these rules when selecting the next participant:
-                1) If the last message was from the user and contains a resume or user ID, it is {{{ResumeParserName}}}'s turn to extract structured information.
-                2) If the last message was from {{{ResumeParserName}}} and contains extracted resume data (e.g., in Markdown), it's {{{JobMatcherName}}}'s turn to find matching jobs.
+                1) If the last message was from the user and contains a user ID, it is {{{ResumeParserName}}}'s turn to extract structured information, but only if {{{ResumeParserName}}} has not yet been called in the conversation history.
+                2) If the last message was from {{{ResumeParserName}}} and contains extracted resume data (e.g., starts with "## ResumeFetchResult"), it's {{{JobMatcherName}}}'s turn to find matching jobs.
                 3) If the last message was from {{{JobMatcherName}}} and contains job matching results, it's {{{CareerAdvisorName}}}'s turn to provide career advice.
                 4) If the last message was from {{{CareerAdvisorName}}} and contains career advice, it's {{{InterviewCoachName}}}'s turn to offer interview preparation guidance.
                 5) If the last message was from {{{InterviewCoachName}}} and contains interview guidance, the conversation is complete.
@@ -65,25 +61,25 @@ public class AgentGroupOrchestrator
                 """
 		);
 
-		return new KernelFunctionSelectionStrategy(selectionFunction, _kernel)
+		return new KernelFunctionSelectionStrategy(selectionFunction, kernel)
 		{
 			HistoryVariableName = "history"
 		};
 	}
 
 	[Experimental("SKEXP0110")]
-	private KernelFunctionTerminationStrategy CreateTerminationStrategy(ChatCompletionAgent[] agents)
+	private KernelFunctionTerminationStrategy CreateTerminationStrategy(ChatCompletionAgent[] agents, Kernel kernel)
 	{
 		var terminateFunction = KernelFunctionFactory.CreateFromPrompt(
 			"""
-                Determine if the job assistance process is complete based on whether the InterviewCoach has provided their recommendations. If so, respond with a single word: yes
+                Determine if the job assistance process is complete based on whether the InterviewCoach has provided their recommendations. If the last message was from InterviewCoach and contains interview guidance, respond with a single word: yes
 
                 History:
                 {{$history}}
                 """
 		);
 
-		return new KernelFunctionTerminationStrategy(terminateFunction, _kernel)
+		return new KernelFunctionTerminationStrategy(terminateFunction, kernel)
 		{
 			Agents = agents,
 			ResultParser = result => result.GetValue<string>()?.Contains("yes", StringComparison.OrdinalIgnoreCase) ?? false,

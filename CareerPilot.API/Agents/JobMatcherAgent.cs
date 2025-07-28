@@ -2,34 +2,39 @@
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel;
 
-namespace CareerPilot.API.Agents
+namespace CareerPilot.API.Agents;
+
+public class JobMatcherAgent
 {
-	public class JobMatcherAgent(Kernel kernel)
+	private readonly Kernel _kernel;
+	public const string AgentName = "JobMatcher";
+
+	public JobMatcherAgent(Kernel kernel)
 	{
-		public const string AgentName = "JobMatcher";
+		_kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
+	}
 
-		public ChatCompletionAgent Create()
+	public ChatCompletionAgent Create()
+	{
+		var getJobs = _kernel.Plugins.GetFunction("JobAssistantPlugin", "GetJobs");
+
+		return new ChatCompletionAgent
 		{
-			var getJobs = kernel.Plugins.GetFunction(nameof(JobAssistantPlugin), nameof(JobAssistantPlugin.GetJobsAsync));
-
-			return new ChatCompletionAgent
+			Name = AgentName,
+			Instructions = GetInstructions(),
+			Kernel = _kernel,
+			Arguments = new KernelArguments(new PromptExecutionSettings()
 			{
-				Name = AgentName,
-				Instructions = GetInstructions(),
-				Kernel = kernel,
-				Arguments = new KernelArguments(new PromptExecutionSettings()
-				{
-					FunctionChoiceBehavior = FunctionChoiceBehavior.Required([getJobs])
-				})
-			};
-		}
+				FunctionChoiceBehavior = FunctionChoiceBehavior.Required([getJobs])
+			})
+		};
+	}
 
-		private static string GetInstructions()
-		{
-			return """
-               Get list of available jobs to find the best job matches based on a candidate's resume.
-               Be direct and professional. Do not engage in chitchat.
-               """;
-		}
+	private static string GetInstructions()
+	{
+		return """
+            Get list of available jobs to find the best job matches based on a candidate's resume.
+            Be direct and professional. Do not engage in chitchat.
+            """;
 	}
 }
