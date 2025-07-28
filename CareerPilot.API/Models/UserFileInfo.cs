@@ -3,7 +3,7 @@
 	public class UserFileInfo
 	{
 		public int Id { get; set; }
-		public string UserId { get; set; } // Foreign key
+		public int UserId { get; set; } // Foreign key
 
 		public string FileName { get; set; }
 		public string FileUrl { get; set; }

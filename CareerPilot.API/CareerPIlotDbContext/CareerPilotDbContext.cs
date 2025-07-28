@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CareerPilot.API.CareerPIlotDbContext
 {
-	public class AppDbContext : DbContext
+	public class CareerPilotDbContext : DbContext
 	{
-		public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+		public CareerPilotDbContext(DbContextOptions<CareerPilotDbContext> options) : base(options)
 		{
 		}
 
@@ -24,7 +24,7 @@ namespace CareerPilot.API.CareerPIlotDbContext
 				.OnDelete(DeleteBehavior.Cascade)
 				.IsRequired();
 
-			modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+			modelBuilder.ApplyConfigurationsFromAssembly(typeof(CareerPilotDbContext).Assembly);
 		}
 
 	}
