@@ -37,7 +37,7 @@ namespace CareerPilot.API.Plugins
 		}
 
 		[KernelFunction, Description("Get User resume frome cludinary as memorystream")]
-		public string GetResumeFromCludinary(string userId)
+		public string GetUserResume(string userId)
 		{
 			return null;
 		}

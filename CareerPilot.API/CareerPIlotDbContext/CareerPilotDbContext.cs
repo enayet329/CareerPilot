@@ -24,8 +24,14 @@ namespace CareerPilot.API.CareerPIlotDbContext
 				.OnDelete(DeleteBehavior.Cascade)
 				.IsRequired();
 
+			// Set max length for ResumeText
+			modelBuilder.Entity<UserFileInfo>()
+				.Property(uf => uf.ResumeText)
+				.HasMaxLength(4000);
+
 			modelBuilder.ApplyConfigurationsFromAssembly(typeof(CareerPilotDbContext).Assembly);
 		}
+
 
 	}
 }
