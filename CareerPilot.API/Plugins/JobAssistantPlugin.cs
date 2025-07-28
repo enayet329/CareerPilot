@@ -35,5 +35,11 @@ namespace CareerPilot.API.Plugins
 
 			return JsonSerializer.Serialize(filteredJobs);
 		}
+
+		[KernelFunction, Description("Get User resume frome cludinary as memorystream")]
+		public string GetResumeFromCludinary(string userId)
+		{
+			return null;
+		}
 	}
 }
